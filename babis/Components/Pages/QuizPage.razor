@@ -1,0 +1,100 @@
+@page "/quiz"
+@using babis.Models
+@rendermode  InteractiveServer
+
+<div class="quiz-container">
+    <h3>@quiz.Title</h3>
+    <p class="quiz-description">@quiz.Description</p>
+
+    @foreach (var question in quiz.Questions)
+    {
+        <div class="question-container">
+            <h4>@question.QuestionContent</h4>
+            @foreach (var option in question.Options)
+            {
+                <div class="option">
+                    <input type="radio" 
+                           id="@option" 
+                           name="question_@question.Id" 
+                           @bind="@selectedAnswers[question.Id]" />
+                    <label for="@option">@option</label>
+                </div>
+            }
+        </div>
+    }
+
+
+    <button class="submit-btn" @onclick="SubmitQuiz">Submit</button>
+
+    @if (isSubmitted)
+    {
+        <div class="result">
+            <h4>Results</h4>
+            @foreach (var question in quiz.Questions)
+            {
+                <div class="result-item">
+                    <strong>@question.QuestionContent</strong>
+                    <p>Correct Answer: @question.Options[question.CorrectAnswer - 1]</p>
+                    <p>Your Answer: @selectedAnswers[question.Id]</p>
+                    <p class="@(IsCorrect(question) ? "correct" : "incorrect")">
+                        @(IsCorrect(question) ? "Correct!" : "Incorrect")
+                    </p>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private static Quiz quiz = new Quiz
+    {
+        Id = 1,
+        Title = "Test Quiz",
+        Description = "Simple description",
+        Questions = new List<Question>
+        {
+            new Question
+            {
+                Id = 1,
+                QuestionContent = "What is 2 + 2?",
+                Options = new List<string> { "1", "2", "3", "4" },
+                CorrectAnswer = 4,
+                Category = new Category { Id = 1, Name = "Math" }
+            },
+            new Question
+            {
+                Id = 2,
+                QuestionContent = "What is the capital of France?",
+                Options = new List<string> { "Berlin", "Madrid", "Paris", "Rome" },
+                CorrectAnswer = 3,
+                Category = new Category { Id = 2, Name = "Geography" }
+            }
+        }
+    };
+
+    private Dictionary<int, string> selectedAnswers = new Dictionary<int, string>();
+    private bool isSubmitted = false;
+
+    protected override void OnInitialized()
+    {
+        foreach (var question in quiz.Questions)
+        {
+            if (!selectedAnswers.ContainsKey(question.Id))
+            {
+                selectedAnswers[question.Id] = string.Empty; 
+            }
+        }
+    }
+
+    private void SubmitQuiz()
+    {
+        isSubmitted = true;
+    }
+
+    private bool IsCorrect(Question question)
+    {
+        var selectedAnswer = selectedAnswers.ContainsKey(question.Id) ? selectedAnswers[question.Id] : string.Empty;
+        return selectedAnswer == question.Options[question.CorrectAnswer - 1];
+    }
+}
+
